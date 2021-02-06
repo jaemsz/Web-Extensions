@@ -15,8 +15,7 @@ function onQueryTab(tabs)
         xhr.open("POST", VT_URL_SCAN_URL, true);
         xhr.setRequestHeader(VT_API_KEY_HEADER, VT_API_KEY);
         xhr.onreadystatechange = function() {
-            //if (xhr.readyState == 4 && xhr.status == 200)
-            if (false)
+            if (xhr.readyState == 4 && xhr.status == 200)
             {
                 responseJSON = JSON.parse(xhr.responseText);
                 id = responseJSON.data.id.split("-")[1];
@@ -26,8 +25,7 @@ function onQueryTab(tabs)
                 
                 resolve(vtUrl);
             }
-            //else if (xhr.status != 200)
-            else if (true)
+            else if (xhr.status != 200)
             {
                 reject();
             }

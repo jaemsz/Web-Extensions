@@ -4,7 +4,7 @@
   "manifest_version": 2,
   "name": "vt-url-scanner",
   "version": "1.0",
-  "homepage_url": "",
+  "homepage_url": "https://github.com/jaemsz/Web-Extensions/tree/main/vt-url-scanner",
   "icons": {
     "48": "icons/vt-48.jpg"
   },

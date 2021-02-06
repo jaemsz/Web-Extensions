@@ -33,11 +33,11 @@ function onQueryTab(tabs)
         xhr.send(fd);
     });
     
-    p.then(function(url) {
+    p.then((url) => {
         browser.tabs.create({
             "url": url
         });
-    }, function() {
+    }, () => {
         const executing = browser.tabs.executeScript({
             code: "alert('Please wait 60 seconds and try again...');"
         });

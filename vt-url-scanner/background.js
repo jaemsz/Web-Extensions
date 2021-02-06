@@ -1,37 +1,45 @@
 VT_API_KEY = "<ENTER YOUR KEY HERE>";
-VT_URL_SCAN_URL = "https://www.virustotal.com/api/v3/urls";
-VT_URL_DETECTION_URL = "https://www.virustotal.com/gui/url/{id}/detection"
 VT_API_KEY_HEADER = "x-apikey";
+VT_URL_SCAN_URL = "https://www.virustotal.com/api/v3/urls";
+VT_GUI_URL_DETECTION_URL = "https://www.virustotal.com/gui/url/{id}/detection"
 
 function onQueryTab(tabs)
 {
-    tab = tabs[0];
-
-    fd = new FormData();
-    fd.append("url", tab.url);
+    let tab = tabs[0];
     
-    xhr = new XMLHttpRequest();
-    xhr.open("POST", VT_URL_SCAN_URL, true);
-    xhr.setRequestHeader(VT_API_KEY_HEADER, VT_API_KEY);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState == 4 && xhr.status == 200)
-        {
-            responseJSON = JSON.parse(xhr.responseText);
-            id = responseJSON.data.id.split("-")[1];
-            
-            vtUrl = VT_URL_DETECTION_URL;
-            vtUrl = vtUrl.replace("{id}", id);
-            
-            browser.tabs.create({
-                "url": vtUrl
-            });
+    let p = new Promise(function(onSuccess, onError) {
+        fd = new FormData();
+        fd.append("url", tab.url);
+        
+        xhr = new XMLHttpRequest();
+        xhr.open("POST", VT_URL_SCAN_URL, true);
+        xhr.setRequestHeader(VT_API_KEY_HEADER, VT_API_KEY);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4 && xhr.status == 200)
+            {
+                responseJSON = JSON.parse(xhr.responseText);
+                id = responseJSON.data.id.split("-")[1];
+                
+                vtUrl = VT_GUI_URL_DETECTION_URL;
+                vtUrl = vtUrl.replace("{id}", id);
+                
+                onSuccess(vtUrl);
+            }
+            else if (xhr.status != 200)
+            {
+                onError();
+            }
         }
-        else if (xhr.status != 200)
-        {
-            alert("Please wait 60 seconds and try again...");
-        }
-    }
-    xhr.send(fd);
+        xhr.send(fd);
+    });
+    
+    p.then(function(url) {
+        browser.tabs.create({
+            "url": url
+        });
+    }, function() {
+        console.log("Please wait 60 seconds and try again...");
+    });
 }
 
 function openVT()

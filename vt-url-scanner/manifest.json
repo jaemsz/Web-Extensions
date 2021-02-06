@@ -1,0 +1,22 @@
+{
+
+  "description": "Adds browser action icon to toolbar to scan current active tab URL.",
+  "manifest_version": 2,
+  "name": "vt-url-scanner",
+  "version": "1.0",
+  "homepage_url": "",
+  "icons": {
+    "48": "icons/vt-48.jpg"
+  },
+  
+  "background": {
+    "scripts": ["background.js"]
+  },
+  
+  "browser_action": {
+    "default_icon": "icons/vt-32.jpg"
+  },
+  
+  "permissions": ["tabs", "<all_urls>"]
+  
+}

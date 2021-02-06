@@ -50,7 +50,7 @@ function onQueryTab(tabs)
 function openVT()
 {
     // Tabs permission is required in order to make the following call
-    browser.tabs.query({currentWindow: true, active: true}).then(onQueryTab, console.error);
+    browser.tabs.query({currentWindow: true, active: true}).then(onQueryTab, () => {});
 }
 
 browser.browserAction.onClicked.addListener(openVT);

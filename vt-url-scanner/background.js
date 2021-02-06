@@ -7,7 +7,7 @@ function onQueryTab(tabs)
 {
     let tab = tabs[0];
     
-    let p = new Promise(function(onSuccess, onError) {
+    let p = new Promise(function(resolve, reject) {
         fd = new FormData();
         fd.append("url", tab.url);
         
@@ -15,7 +15,8 @@ function onQueryTab(tabs)
         xhr.open("POST", VT_URL_SCAN_URL, true);
         xhr.setRequestHeader(VT_API_KEY_HEADER, VT_API_KEY);
         xhr.onreadystatechange = function() {
-            if (xhr.readyState == 4 && xhr.status == 200)
+            //if (xhr.readyState == 4 && xhr.status == 200)
+            if (false)
             {
                 responseJSON = JSON.parse(xhr.responseText);
                 id = responseJSON.data.id.split("-")[1];
@@ -23,11 +24,12 @@ function onQueryTab(tabs)
                 vtUrl = VT_GUI_URL_DETECTION_URL;
                 vtUrl = vtUrl.replace("{id}", id);
                 
-                onSuccess(vtUrl);
+                resolve(vtUrl);
             }
-            else if (xhr.status != 200)
+            //else if (xhr.status != 200)
+            else if (true)
             {
-                onError();
+                reject();
             }
         }
         xhr.send(fd);
@@ -38,7 +40,12 @@ function onQueryTab(tabs)
             "url": url
         });
     }, function() {
-        console.log("Please wait 60 seconds and try again...");
+        const executing = browser.tabs.executeScript({
+            code: "alert('Please wait 60 seconds and try again...');"
+        });
+        executing.then(() => {
+            console.log("Injected alert into active tab");
+        });
     });
 }
 

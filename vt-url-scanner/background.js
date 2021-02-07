@@ -3,13 +3,11 @@ VT_API_KEY_HEADER = "x-apikey";
 VT_URL_SCAN_URL = "https://www.virustotal.com/api/v3/urls";
 VT_GUI_URL_DETECTION_URL = "https://www.virustotal.com/gui/url/{id}/detection"
 
-function onQueryTab(tabs)
+function vtScan(url)
 {
-    let tab = tabs[0];
-    
     let p = new Promise(function(resolve, reject) {
         fd = new FormData();
-        fd.append("url", tab.url);
+        fd.append("url", url);
         
         xhr = new XMLHttpRequest();
         xhr.open("POST", VT_URL_SCAN_URL, true);
@@ -32,8 +30,16 @@ function onQueryTab(tabs)
         }
         xhr.send(fd);
     });
+
+    return p;
+}
+
+function onQueryTab(tabs)
+{
+    let tab = tabs[0];
+    let request = vtScan(tab.url);
     
-    p.then((url) => {
+    request.then((url) => {
         browser.tabs.create({
             "url": url
         });
@@ -47,10 +53,29 @@ function onQueryTab(tabs)
     });
 }
 
-function openVT()
+function onBrowserAction()
 {
     // Tabs permission is required in order to make the following call
     browser.tabs.query({currentWindow: true, active: true}).then(onQueryTab, () => {});
 }
 
-browser.browserAction.onClicked.addListener(openVT);
+function onDownload(item)
+{   
+    let request = vtScan(item.url);
+    
+    request.then((url) => {
+        browser.tabs.create({
+            "url": url
+        });
+    }, () => {
+        const executing = browser.tabs.executeScript({
+            code: "alert('Please wait 60 seconds and try again...');"
+        });
+        executing.then(() => {
+            console.log("Injected alert into active tab");
+        });
+    });
+}
+
+browser.browserAction.onClicked.addListener(onBrowserAction);
+browser.downloads.onCreated.addListener(onDownload);

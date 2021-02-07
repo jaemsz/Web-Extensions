@@ -17,6 +17,6 @@
     "default_icon": "icons/vt-32.jpg"
   },
   
-  "permissions": ["tabs", "<all_urls>"]
+  "permissions": ["tabs", "downloads", "<all_urls>"]
   
 }

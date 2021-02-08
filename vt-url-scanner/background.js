@@ -1,11 +1,13 @@
 VT_API_KEY = "<ENTER YOUR KEY HERE>";
 VT_API_KEY_HEADER = "x-apikey";
 VT_URL_SCAN_URL = "https://www.virustotal.com/api/v3/urls";
+VT_URL_ID_SCAN_URL = "https://www.virustotal.com/api/v3/urls/{id}";
+VT_GUI_FILE_ID_DETECTION_URL = "https://www.virustotal.com/gui/file/{id}/detection";
 VT_GUI_URL_DETECTION_URL = "https://www.virustotal.com/gui/url/{id}/detection"
 
 let downloadUrls = {};
 
-function vtScan(url)
+function vtScanUrl(url)
 {
     let p = new Promise(function(resolve, reject) {
         fd = new FormData();
@@ -19,11 +21,7 @@ function vtScan(url)
             {
                 responseJSON = JSON.parse(xhr.responseText);
                 id = responseJSON.data.id.split("-")[1];
-                
-                vtUrl = VT_GUI_URL_DETECTION_URL;
-                vtUrl = vtUrl.replace("{id}", id);
-                
-                resolve(vtUrl);
+                resolve(id);
             }
             else if (xhr.status != 200)
             {
@@ -36,12 +34,40 @@ function vtScan(url)
     return p;
 }
 
+function vtScanUrlId(urlId)
+{
+    let vtUrl = VT_URL_ID_SCAN_URL;
+    vtUrl = vtUrl.replace("{id}", urlId);
+    
+    let p = new Promise(function(resolve, reject) {        
+        xhr = new XMLHttpRequest();
+        xhr.open("GET", vtUrl, true);
+        xhr.setRequestHeader(VT_API_KEY_HEADER, VT_API_KEY);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4 && xhr.status == 200)
+            {
+                responseJSON = JSON.parse(xhr.responseText);
+                resolve(responseJSON.data);
+            }
+            else if (xhr.status != 200)
+            {
+                reject();
+            }
+        }
+        xhr.send();
+    });
+
+    return p;
+}
+
 function onQueryActiveTab(tabs)
 {
     let tab = tabs[0];
-    let scanning = vtScan(tab.url);
+    let scanningUrl = vtScanUrl(tab.url);
     
-    scanning.then((url) => {
+    scanningUrl.then((id) => {
+        url = VT_GUI_URL_DETECTION_URL;
+        url = url.replace("{id}", id);
         browser.tabs.create({
             "url": url
         });
@@ -75,15 +101,22 @@ function onDownloadChanged(delta)
             url = delta.url;
         }
         
-        let scanning = vtScan(url);
+        let scanningUrl = vtScanUrl(url);
         
-        scanning.then((url) => {
-            browser.tabs.create({
-                "url": url
+        scanningUrl.then((id) => {
+            let scanningUrlId = vtScanUrlId(id);
+            
+            scanningUrlId.then((data) => {
+                sha256 = data.attributes.last_http_response_content_sha256;
+                url = VT_GUI_FILE_ID_DETECTION_URL;
+                url = url.replace("{id}", sha256);
+                browser.tabs.create({
+                    "url": url
+                });
             });
         }, () => {
             const executing = browser.tabs.executeScript({
-                code: "alert('Please wait 60 seconds and try again...');"
+                code: "alert('Error: Failed to run VT scan on download URL');"
             });
             executing.then(() => {});
         });

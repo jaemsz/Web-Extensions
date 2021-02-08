@@ -3,6 +3,8 @@ VT_API_KEY_HEADER = "x-apikey";
 VT_URL_SCAN_URL = "https://www.virustotal.com/api/v3/urls";
 VT_GUI_URL_DETECTION_URL = "https://www.virustotal.com/gui/url/{id}/detection"
 
+let downloadUrls = {};
+
 function vtScan(url)
 {
     let p = new Promise(function(resolve, reject) {
@@ -34,12 +36,12 @@ function vtScan(url)
     return p;
 }
 
-function onQueryTab(tabs)
+function onQueryActiveTab(tabs)
 {
     let tab = tabs[0];
-    let request = vtScan(tab.url);
+    let scanning = vtScan(tab.url);
     
-    request.then((url) => {
+    scanning.then((url) => {
         browser.tabs.create({
             "url": url
         });
@@ -47,35 +49,48 @@ function onQueryTab(tabs)
         const executing = browser.tabs.executeScript({
             code: "alert('Please wait 60 seconds and try again...');"
         });
-        executing.then(() => {
-            console.log("Injected alert into active tab");
-        });
+        executing.then(() => {});
     });
 }
 
-function onBrowserAction()
+function onBrowserActionClicked()
 {
     // Tabs permission is required in order to make the following call
-    browser.tabs.query({currentWindow: true, active: true}).then(onQueryTab, () => {});
+    browser.tabs.query({currentWindow: true, active: true}).then(onQueryActiveTab, () => {});
 }
 
-function onDownload(item)
-{   
-    let request = vtScan(item.url);
-    
-    request.then((url) => {
-        browser.tabs.create({
-            "url": url
-        });
-    }, () => {
-        const executing = browser.tabs.executeScript({
-            code: "alert('Please wait 60 seconds and try again...');"
-        });
-        executing.then(() => {
-            console.log("Injected alert into active tab");
-        });
-    });
+function onDownloadCreated(item)
+{
+    downloadUrls[item.id] = item.url;
 }
 
-browser.browserAction.onClicked.addListener(onBrowserAction);
-browser.downloads.onCreated.addListener(onDownload);
+function onDownloadChanged(delta)
+{
+    if (delta.state && delta.state.current == "complete")
+    {
+        let url = downloadUrls[delta.id];
+        
+        if (delta.url != null)
+        {
+            url = delta.url;
+        }
+        
+        let scanning = vtScan(url);
+        
+        scanning.then((url) => {
+            browser.tabs.create({
+                "url": url
+            });
+        }, () => {
+            const executing = browser.tabs.executeScript({
+                code: "alert('Please wait 60 seconds and try again...');"
+            });
+            executing.then(() => {});
+        });
+    }
+}
+
+browser.browserAction.onClicked.addListener(onBrowserActionClicked);
+// downloads permission is required in order to listen for download events
+browser.downloads.onCreated.addListener(onDownloadCreated);
+browser.downloads.onChanged.addListener(onDownloadChanged);

@@ -1,8 +1,10 @@
 VT_API_KEY_HEADER = "x-apikey";
+
 VT_URL_SCAN_URL = "https://www.virustotal.com/api/v3/urls";
 VT_URL_ID_SCAN_URL = "https://www.virustotal.com/api/v3/urls/{id}";
+
 VT_GUI_FILE_ID_DETECTION_URL = "https://www.virustotal.com/gui/file/{id}/detection";
-VT_GUI_URL_DETECTION_URL = "https://www.virustotal.com/gui/url/{id}/detection"
+VT_GUI_URL_ID_DETECTION_URL = "https://www.virustotal.com/gui/url/{id}/detection"
 
 ERROR_INVALID_API_KEY = "Please use a valid VirusTotal API key";
 ERROR_GENERIC = "Please wait 60 seconds and try again...";
@@ -59,10 +61,10 @@ function vtScanUrl(url)
 
 function vtScanUrlId(urlId)
 {
-    let vtUrl = VT_URL_ID_SCAN_URL;
-    vtUrl = vtUrl.replace("{id}", urlId);
-    
     let p = new Promise(function(resolve, reject) {        
+        let vtUrl = VT_URL_ID_SCAN_URL;
+        vtUrl = vtUrl.replace("{id}", urlId);
+        
         xhr = new XMLHttpRequest();
         xhr.open("GET", vtUrl, true);
         xhr.setRequestHeader(VT_API_KEY_HEADER, vtApiKey);
@@ -93,7 +95,7 @@ function onQueryActiveTab(tabs)
     let scanningUrl = vtScanUrl(tab.url);
     
     scanningUrl.then((id) => {
-        url = VT_GUI_URL_DETECTION_URL;
+        url = VT_GUI_URL_ID_DETECTION_URL;
         url = url.replace("{id}", id);
         browser.tabs.create({
             "url": url

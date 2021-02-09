@@ -17,6 +17,11 @@
     "default_icon": "icons/vt-32.jpg"
   },
   
-  "permissions": ["tabs", "downloads", "<all_urls>"]
+  "options_ui": {
+    "page": "options.html",
+    "browser_style": true
+  },
+  
+  "permissions": ["tabs", "downloads", "storage", "<all_urls>"]
   
 }

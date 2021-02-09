@@ -1,11 +1,30 @@
-VT_API_KEY = "<ENTER YOUR KEY HERE>";
 VT_API_KEY_HEADER = "x-apikey";
 VT_URL_SCAN_URL = "https://www.virustotal.com/api/v3/urls";
 VT_URL_ID_SCAN_URL = "https://www.virustotal.com/api/v3/urls/{id}";
 VT_GUI_FILE_ID_DETECTION_URL = "https://www.virustotal.com/gui/file/{id}/detection";
 VT_GUI_URL_DETECTION_URL = "https://www.virustotal.com/gui/url/{id}/detection"
 
+ERROR_INVALID_API_KEY = "Please use a valid VirusTotal API key";
+ERROR_GENERIC = "Please wait 60 seconds and try again...";
+
+let vtApiKey = "";
 let downloadUrls = {};
+
+browser.runtime.onInstalled.addListener(details => {
+    browser.storage.local.set({
+        vtApiKey: vtApiKey
+    });
+});
+
+browser.storage.local.get(data => {
+    if (data.vtApiKey) {
+        vtApiKey = data.vtApiKey;
+    }
+});
+
+browser.storage.onChanged.addListener(changeData => {
+    vtApiKey = changeData.vtApiKey.newValue;
+});
 
 function vtScanUrl(url)
 {
@@ -15,7 +34,7 @@ function vtScanUrl(url)
         
         xhr = new XMLHttpRequest();
         xhr.open("POST", VT_URL_SCAN_URL, true);
-        xhr.setRequestHeader(VT_API_KEY_HEADER, VT_API_KEY);
+        xhr.setRequestHeader(VT_API_KEY_HEADER, vtApiKey);
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4 && xhr.status == 200)
             {
@@ -23,14 +42,18 @@ function vtScanUrl(url)
                 id = responseJSON.data.id.split("-")[1];
                 resolve(id);
             }
+            else if (xhr.status == 401)
+            {
+                reject(ERROR_INVALID_API_KEY);
+            }
             else if (xhr.status != 200)
             {
-                reject();
+                reject(ERROR_GENERIC);
             }
         }
         xhr.send(fd);
     });
-
+    
     return p;
 }
 
@@ -42,21 +65,25 @@ function vtScanUrlId(urlId)
     let p = new Promise(function(resolve, reject) {        
         xhr = new XMLHttpRequest();
         xhr.open("GET", vtUrl, true);
-        xhr.setRequestHeader(VT_API_KEY_HEADER, VT_API_KEY);
+        xhr.setRequestHeader(VT_API_KEY_HEADER, vtApiKey);
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4 && xhr.status == 200)
             {
                 responseJSON = JSON.parse(xhr.responseText);
                 resolve(responseJSON.data);
             }
+            else if (xhr.status == 401)
+            {
+                reject(ERROR_INVALID_API_KEY);
+            }
             else if (xhr.status != 200)
             {
-                reject();
+                reject(ERROR_GENERIC);
             }
         }
         xhr.send();
     });
-
+    
     return p;
 }
 
@@ -71,9 +98,10 @@ function onQueryActiveTab(tabs)
         browser.tabs.create({
             "url": url
         });
-    }, () => {
+    }, (error) => {
+        alert_msg = "alert('" + error + "');";
         const executing = browser.tabs.executeScript({
-            code: "alert('Please wait 60 seconds and try again...');"
+            code: alert_msg
         });
         executing.then(() => {});
     });
@@ -114,9 +142,10 @@ function onDownloadChanged(delta)
                     "url": url
                 });
             });
-        }, () => {
+        }, (error) => {
+            alert_msg = "alert('" + error + "');";
             const executing = browser.tabs.executeScript({
-                code: "alert('Error: Failed to run VT scan on download URL');"
+                code: alert_msg
             });
             executing.then(() => {});
         });

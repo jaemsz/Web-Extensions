@@ -3,7 +3,7 @@
   "description": "Adds browser action icon to toolbar to scan current active tab URL.",
   "manifest_version": 2,
   "name": "vt-url-scanner",
-  "version": "1.0",
+  "version": "1.3",
   "homepage_url": "https://github.com/jaemsz/Web-Extensions/tree/main/vt-url-scanner",
   "icons": {
     "48": "icons/vt-48.jpg"

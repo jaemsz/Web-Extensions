@@ -12,6 +12,15 @@ let tabid_private_map = {};
 
 function isPrivateIP(hostname)
 {
+    /*
+        The following IPv4 address ranges are reserved by the IANA for private
+        internets, and are not publicly routable on the global internet:
+                
+        10.0.0.0/8 IP addresses:        10.0.0.0    – 10.255.255.255
+        172.16.0.0/12 IP addresses:     172.16.0.0  – 172.31.255.255
+        192.168.0.0/16 IP addresses:    192.168.0.0 – 192.168.255.255
+    */
+
     let parts = hostname.split(".");
     let ret = false;
     
@@ -74,16 +83,7 @@ function isPrivateIP(hostname)
     return ret;
 }
 
-function handleProxyRequest(requestInfo) {
-    /*
-        The following IPv4 address ranges are reserved by the IANA for private
-        internets, and are not publicly routable on the global internet:
-                
-        10.0.0.0/8 IP addresses:        10.0.0.0    – 10.255.255.255
-        172.16.0.0/12 IP addresses:     172.16.0.0  – 172.31.255.255
-        192.168.0.0/16 IP addresses:    192.168.0.0 – 192.168.255.255
-    */
-    
+function handleProxyRequest(requestInfo) {    
     if (requestInfo.type == "main_frame")
     {
         const url = new URL(requestInfo.url);
@@ -92,12 +92,19 @@ function handleProxyRequest(requestInfo) {
     }
     else if (requestInfo.type == "xmlhttprequest")
     {
-        const url = new URL(requestInfo.url);
-        let block = isPrivateIP(url.hostname);
-        if (block && !tabid_private_map[requestInfo.tabId])
+        if (!tabid_private_map[requestInfo.tabId])
         {
-            console.log(`Blocking: ${url.hostname}`);
-            return {type: "http", host: "127.0.0.1", port: 65535};
+            const url = new URL(requestInfo.url);
+            let block = isPrivateIP(url.hostname);
+            if (block)
+            {
+                console.log(`Blocking: ${url.hostname}`);
+                return {type: "http", host: "127.0.0.1", port: 65535};
+            }
+            
+            // Might be overkill, but could:
+            // 1.  submit the URL to VT for analysis
+            // 2.  submit the URL to private server for collection and analysis
         }
     }
         
@@ -107,6 +114,3 @@ function handleProxyRequest(requestInfo) {
 browser.proxy.onError.addListener(error => {
     console.error(`Proxy error: ${error.message}`);
 });
-
-
-

@@ -1,0 +1,27 @@
+{
+
+  "manifest_version": 2,
+  "name": "Protect-Private-IP",
+  "description": "Uses the proxy API to block requests to private IP addresses",
+  "version": "1.0",
+
+  "icons": {
+    "48": "icons/block.svg",
+    "96": "icons/block.svg"
+  },
+
+  "browser_specific_settings": {
+    "gecko": {
+      "strict_min_version": "56.0a1"
+    }
+  },
+
+  "background": {
+    "scripts": [
+      "background/proxy-handler.js"
+    ]
+  },
+
+  "permissions": ["proxy", "<all_urls>"]
+
+}

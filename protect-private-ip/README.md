@@ -1,7 +1,10 @@
 
 ## What it does
 
-This extension uses the proxy API listener `onRequest` to listen for AJAX requests.  After reading an article about DNS hijacking in Brazil, I decided to write a simple web extension that would use the proxy API listener `onRequest` to listen for AJAX requests and block it if the main frame hostname is not a private IP address.
+After reading an article about DNS hijacking in Brazil, I decided to write a simple web extension that would use the proxy API listener `onRequest` to listen for AJAX requests and block it if the main frame hostname is not a private IP address.
+
+Article:
+https://cujo.com/dns-hijacking-attacks-on-home-routers-in-brazil/
 
 To try out this extension:
 * install it

@@ -8,7 +8,8 @@
 // Setup proxy 
 browser.proxy.onRequest.addListener(handleProxyRequest, {urls: ["<all_urls>"]});
 
-let tabid_private_map = {};
+let tabid_hostname_map = {};
+
 
 function isPrivateIP(hostname)
 {
@@ -20,7 +21,7 @@ function isPrivateIP(hostname)
         172.16.0.0/12 IP addresses:     172.16.0.0  – 172.31.255.255
         192.168.0.0/16 IP addresses:    192.168.0.0 – 192.168.255.255
     */
-
+    
     let parts = hostname.split(".");
     let ret = false;
     
@@ -83,31 +84,52 @@ function isPrivateIP(hostname)
     return ret;
 }
 
-function handleProxyRequest(requestInfo) {    
+
+function shouldBlock(main_frame_hostname)
+{
+    console.log(`Resolving: ${main_frame_hostname}`);
+    
+    let p = new Promise(function(resolve, reject) {
+        let resolving = browser.dns.resolve(main_frame_hostname);
+        
+        resolving.then(record => {
+            let isPrivate = isPrivateIP(record.addresses[0]);
+            if (isPrivate)
+            {
+                resolve({type: "direct"});
+            }
+            else
+            {
+                resolve({type: "http", host: "127.0.0.1", port: 65535});
+            }
+        });
+    });
+    
+    return p;
+}
+
+
+function handleProxyRequest(requestInfo)
+{
     if (requestInfo.type == "main_frame")
     {
         const url = new URL(requestInfo.url);
-        let isPrivate = isPrivateIP(url.hostname);
-        tabid_private_map[requestInfo.tabId] = isPrivate;
+        tabid_hostname_map[requestInfo.tabId] = url.hostname;
     }
     else if (requestInfo.type == "xmlhttprequest")
     {
-        if (!tabid_private_map[requestInfo.tabId])
+        const url = new URL(requestInfo.url);
+        let isPrivate = isPrivateIP(url.hostname);
+        if (isPrivate)
         {
-            const url = new URL(requestInfo.url);
-            let block = isPrivateIP(url.hostname);
-            if (block)
+            let main_frame_hostname = tabid_hostname_map[requestInfo.tabId];
+            if (main_frame_hostname != null)
             {
-                console.log(`Blocking: ${url.hostname}`);
-                return {type: "http", host: "127.0.0.1", port: 65535};
+                return shouldBlock(main_frame_hostname);
             }
-            
-            // Might be overkill, but could:
-            // 1.  submit the URL to VT for analysis
-            // 2.  submit the URL to private server for collection and analysis
         }
     }
-        
+    
     return {type: "direct"};
 }
 

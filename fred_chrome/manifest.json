@@ -1,0 +1,25 @@
+{
+    "description": "Scan page for phishing",
+    "manifest_version": 3,
+    "name": "phish",
+    "version": "1.0",
+  
+    "background": {
+      "service_worker": "background.js"
+    },
+  
+    "action": {
+      "default_icon": {
+        "16": "icons/scan-16.png",
+        "32": "icons/scan-32.png"
+      }
+    },
+
+    "permissions": ["tabs", "activeTab", "scripting"],
+
+    "host_permissions": [
+      "http://*",
+      "https://*"
+    ]
+}
+  

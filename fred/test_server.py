@@ -15,21 +15,31 @@ phish_urls = [
 class ScanServer(BaseHTTPRequestHandler):
     def _set_headers(self, status_code):
         self.send_response(status_code)
-        self.send_header("Content-type", "application/json")
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type", "x-target-url")
         self.end_headers()
 
     def do_GET(self):
         # get the target url
-        for h in self.headers:
-            if h == "x-target-url":
-                print(f"URL:  {self.headers[h]}")
-                self._set_headers(200)
-                if self.headers[h] in clean_urls:
-                    self.wfile.write(bytes(json.dumps({"disposition": "clean"}, ensure_ascii=False), "utf-8"))
-                elif self.headers[h] in phish_urls:
-                    self.wfile.write(bytes(json.dumps({"disposition": "phish"}, ensure_ascii=False), "utf-8"))
-                else:
-                    self.wfile.write(bytes(json.dumps({"disposition": "unknown"}, ensure_ascii=False), "utf-8"))
+        if "x-target-url" in self.headers:
+            target_url = self.headers["x-target-url"]
+            print(f"URL:  {target_url}")
+            self._set_headers(200)
+            if target_url in clean_urls:
+                self.wfile.write(bytes(json.dumps({"disposition": "clean"}, ensure_ascii=False), "utf-8"))
+            elif target_url in phish_urls:
+                self.wfile.write(bytes(json.dumps({"disposition": "phish"}, ensure_ascii=False), "utf-8"))
+            else:
+                self.wfile.write(bytes(json.dumps({"disposition": "unknown"}, ensure_ascii=False), "utf-8"))
+        else:
+            self._set_headers(404)
 
 def main():
     print("Starting server")

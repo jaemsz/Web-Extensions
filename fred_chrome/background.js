@@ -1,13 +1,5 @@
 const SCANNER_URL = "http://localhost:8080/";
 
-const css = `
-div {
-    text-align: center;
-    border: 3px solid red;
-    width: 300px;
-    margin: 0 auto;
-}`;
-
 function status(response) {
     if (response.status === 200) {
         return Promise.resolve(response);
@@ -18,6 +10,18 @@ function status(response) {
 
 function json(response) {
     return response.json();
+}
+
+function callAlert(msg) {
+    alert(msg);
+}
+
+function execAlert(tabId, msg) {
+    chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        func: callAlert,
+        args: [msg]
+    });
 }
 
 function scanTab(tab) {
@@ -33,18 +37,11 @@ function scanTab(tab) {
         .then(json)
         .then((res) => {
             if (res.disposition === "clean") {
-                console.log(`CLEAN: ${tab.url}`);
-                // change icon to green
+                execAlert(tab.id, "This is a clean page!");
             } else if (res.disposition === "phish") {
-                console.log(`PHISH: ${tab.url}`);
-                chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
-                    files: ["phishing.js"]
-                });
-                // change icon to red
+                execAlert(tab.id, "This is a phishing page!");
             } else {
-                console.log(`UNKNOWN: ${tab.url}`);
-                // change icon to yellow
+                execAlert(tab.id, "This is an unknown page!");
             }
         }).catch((error) => {
             console.log("Request failed", error);
@@ -52,6 +49,5 @@ function scanTab(tab) {
 }
 
 chrome.action.onClicked.addListener((tab) => {
-    const url = tab.url;
     scanTab(tab);
 });

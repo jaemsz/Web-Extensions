@@ -1,7 +1,5 @@
 const SCANNER_URL = "http://localhost:8080/";
 
-const TARGET_URL_HEADER = "x-target-url";
-
 const css = `
 div {
     text-align: center;
@@ -26,7 +24,7 @@ function scanTab(tab) {
     const options = {
         method: "GET",
         headers: new Headers({
-            TARGET_URL_HEADER: tab.url
+            "x-target-url": tab.url
         })
     };
 

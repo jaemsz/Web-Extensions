@@ -30,30 +30,25 @@ class ScanServer(BaseHTTPRequestHandler):
         user_id = ""
         target_url = ""
 
-        # get the user id
-        if "x-user-id-token" in self.headers:
-            user_id = self.headers["x-user-id-token"]
-            print(f"USER ID:  {user_id}")
-        else:
+        if "x-user-id-token" not in self.headers and "x-target-url" not in self.headers:
             self._set_headers(400)
             return
+
+        # get the user id
+        user_id = self.headers["x-user-id-token"]
+        print(f"USER ID:  {user_id}")
 
         # get the target url
-        if "x-target-url" in self.headers:
-            target_url = self.headers["x-target-url"]
-            print(f"URL:  {target_url}")
-        else:
-            self._set_headers(400)
-            return
+        target_url = self.headers["x-target-url"]
+        print(f"URL:  {target_url}")
 
-        if user_id and target_url:
-            self._set_headers(200)
-            if target_url in clean_urls:
-                self.wfile.write(bytes(json.dumps({"disposition": "clean"}, ensure_ascii=False), "utf-8"))
-            elif target_url in phish_urls:
-                self.wfile.write(bytes(json.dumps({"disposition": "phish"}, ensure_ascii=False), "utf-8"))
-            else:
-                self.wfile.write(bytes(json.dumps({"disposition": "unknown"}, ensure_ascii=False), "utf-8"))
+        self._set_headers(200)
+        if target_url in clean_urls:
+            self.wfile.write(bytes(json.dumps({"disposition": "clean"}, ensure_ascii=False), "utf-8"))
+        elif target_url in phish_urls:
+            self.wfile.write(bytes(json.dumps({"disposition": "phish"}, ensure_ascii=False), "utf-8"))
+        else:
+            self.wfile.write(bytes(json.dumps({"disposition": "unknown"}, ensure_ascii=False), "utf-8"))
 
 def main():
     print("Starting server")

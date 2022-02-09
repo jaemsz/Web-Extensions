@@ -1,12 +1,12 @@
 const SCANNER_URL = "http://localhost:8080/";
 
-const disposition_clean = 'clean';
-const disposition_phish = 'phish';
-const disposition_unknown = 'unknown';
+const DISPOSITION_CLEAN = 'clean';
+const DISPOSITION_PHISH = 'phish';
+const DISPOSITION_UNKNOWN = 'unknown';
 
-const msg_clean = 'This is a clean page!';
-const msg_phish = 'This is a phishing page!';
-const msg_unknown = 'This is an unknown page!';
+const MSG_CLEAN = 'This is a clean page!';
+const MSG_PHISH = 'This is a phishing page!';
+const MSG_UNKNOWN = 'This is an unknown page!';
 
 let userIdToken = '';
 
@@ -20,22 +20,6 @@ function generateRandomToken() {
     }
     return hex;
 }
-
-chrome.storage.sync.get('userId', (data) => {
-    let userId = data.userId;
-    if (userId) {
-        useToken(userId)
-    } else {
-        userId = generateRandomToken();
-        chrome.storage.sync.set({ userId: userId }, () => {
-            useToken(userId)
-        });
-    }
-
-    function useToken(userId) {
-        userIdToken = userId;
-    }
-});
 
 function status(response) {
     if (response.status === 200) {
@@ -74,17 +58,33 @@ function scanTab(tab) {
         .then(status)
         .then(json)
         .then((res) => {
-            if (res.disposition === disposition_clean) {
-                execAlert(tab.id, msg_clean);
-            } else if (res.disposition === disposition_phish) {
-                execAlert(tab.id, msg_phish);
+            if (res.disposition === DISPOSITION_CLEAN) {
+                execAlert(tab.id, MSG_CLEAN);
+            } else if (res.disposition === DISPOSITION_PHISH) {
+                execAlert(tab.id, MSG_PHISH);
             } else {
-                execAlert(tab.id, msg_unknown);
+                execAlert(tab.id, MSG_UNKNOWN);
             }
         }).catch((error) => {
             console.log("Request failed", error);
         });
 }
+
+chrome.storage.sync.get('userId', (data) => {
+    let userId = data.userId;
+    if (userId) {
+        useToken(userId)
+    } else {
+        userId = generateRandomToken();
+        chrome.storage.sync.set({ userId: userId }, () => {
+            useToken(userId)
+        });
+    }
+
+    function useToken(userId) {
+        userIdToken = userId;
+    }
+});
 
 chrome.action.onClicked.addListener((tab) => {
     scanTab(tab);

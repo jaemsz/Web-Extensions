@@ -23,14 +23,30 @@ class ScanServer(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type", "x-target-url")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type", "x-target-url", "x-user-id-token")
         self.end_headers()
 
     def do_GET(self):
+        user_id = ""
+        target_url = ""
+
+        # get the user id
+        if "x-user-id-token" in self.headers:
+            user_id = self.headers["x-user-id-token"]
+            print(f"USER ID:  {user_id}")
+        else:
+            self._set_headers(400)
+            return
+
         # get the target url
         if "x-target-url" in self.headers:
             target_url = self.headers["x-target-url"]
             print(f"URL:  {target_url}")
+        else:
+            self._set_headers(400)
+            return
+
+        if user_id and target_url:
             self._set_headers(200)
             if target_url in clean_urls:
                 self.wfile.write(bytes(json.dumps({"disposition": "clean"}, ensure_ascii=False), "utf-8"))
@@ -38,8 +54,6 @@ class ScanServer(BaseHTTPRequestHandler):
                 self.wfile.write(bytes(json.dumps({"disposition": "phish"}, ensure_ascii=False), "utf-8"))
             else:
                 self.wfile.write(bytes(json.dumps({"disposition": "unknown"}, ensure_ascii=False), "utf-8"))
-        else:
-            self._set_headers(404)
 
 def main():
     print("Starting server")
